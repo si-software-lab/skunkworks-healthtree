@@ -1,0 +1,105 @@
+{
+  "Patient->PERSON": {
+    "resourceType": "Patient",
+    "omop_table": "person",
+    "rules": [
+      {
+        "omop_field": "person_id",
+        "from": "$.id",
+        "transform": "uuid_as_int"
+      },
+      {
+        "omop_field": "gender_concept_id",
+        "from": "$.gender",
+        "transform": "gender_to_concept"
+      },
+      {
+        "omop_field": "year_of_birth",
+        "from": "$.birthDate",
+        "transform": "date_year"
+      },
+      {
+        "omop_field": "month_of_birth",
+        "from": "$.birthDate",
+        "transform": "date_month"
+      },
+      {
+        "omop_field": "day_of_birth",
+        "from": "$.birthDate",
+        "transform": "date_day"
+      }
+    ]
+  },
+  "Observation->MEASUREMENT": {
+    "resourceType": "Observation",
+    "match": "$.category[0].coding[0].code in ['vital-signs','laboratory']",
+    "omop_table": "measurement",
+    "rules": [
+      {
+        "omop_field": "measurement_id",
+        "from": "$.id",
+        "transform": "uuid_as_int"
+      },
+      {
+        "omop_field": "person_id",
+        "from": "$.subject.reference",
+        "transform": "fhir_ref_to_person_id"
+      },
+      {
+        "omop_field": "measurement_concept_id",
+        "from": "$.code.coding[0].code",
+        "transform": "loinc_to_concept"
+      },
+      {
+        "omop_field": "measurement_date",
+        "from": "$.effectiveDateTime",
+        "transform": "to_date"
+      },
+      {
+        "omop_field": "measurement_datetime",
+        "from": "$.effectiveDateTime",
+        "transform": "to_datetime"
+      },
+      {
+        "omop_field": "value_as_number",
+        "from": "$.valueQuantity.value"
+      },
+      {
+        "omop_field": "unit_concept_id",
+        "from": "$.valueQuantity.code",
+        "transform": "ucum_to_concept"
+      }
+    ]
+  },
+  "Condition->CONDITION_OCCURRENCE": {
+    "resourceType": "Condition",
+    "omop_table": "condition_occurrence",
+    "rules": [
+      {
+        "omop_field": "condition_occurrence_id",
+        "from": "$.id",
+        "transform": "uuid_as_int"
+      },
+      {
+        "omop_field": "person_id",
+        "from": "$.subject.reference",
+        "transform": "fhir_ref_to_person_id"
+      },
+      {
+        "omop_field": "condition_concept_id",
+        "from": "$.code.coding[0].code",
+        "transform": "snomed_to_concept"
+      },
+      {
+        "omop_field": "condition_start_date",
+        "from": "$.onsetDateTime",
+        "transform": "to_date"
+      },
+      {
+        "omop_field": "condition_start_datetime",
+        "from": "$.onsetDateTime",
+        "transform": "to_datetime"
+      }
+    ]
+  }
+}

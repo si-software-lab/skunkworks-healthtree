@@ -1,0 +1,2 @@
+image: bitnami/kafka:3
+zookeeperImage: bitnami/zookeeper:3

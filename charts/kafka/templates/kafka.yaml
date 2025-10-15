@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata: { name: kafka }
+spec:
+  selector: { app: kafka }
+  ports: [{ name: kafka, port: 9092, targetPort: 9092 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: kafka }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: kafka } }
+  template:
+    metadata: { labels: { app: kafka } }
+    spec:
+      containers:
+        - name: kafka
+          image: {{ .Values.image }}
+          env:
+            - { name: KAFKA_ENABLE_KRAFT, value: "no" }
+            - { name: ALLOW_PLAINTEXT_LISTENER, value: "yes" }
+            - { name: KAFKA_CFG_ZOOKEEPER_CONNECT, value: "zookeeper:2181" }
+            - { name: KAFKA_CFG_ADVERTISED_LISTENERS, value: "PLAINTEXT://kafka:9092" }
+          ports: [{ containerPort: 9092 }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: zookeeper }
+spec:
+  selector: { app: zookeeper }
+  ports: [{ name: zk, port: 2181, targetPort: 2181 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: zookeeper }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: zookeeper } }
+  template:
+    metadata: { labels: { app: zookeeper } }
+    spec:
+      containers:
+        - name: zookeeper
+          image: {{ .Values.zookeeperImage }}
+          env:
+            - { name: ALLOW_ANONYMOUS_LOGIN, value: "yes" }
+          ports: [{ containerPort: 2181 }]

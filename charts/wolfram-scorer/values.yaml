@@ -1,0 +1,2 @@
+image: wolfram-scorer:latest
+port: 8088

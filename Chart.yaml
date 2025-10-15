@@ -1,0 +1,25 @@
+apiVersion: v2
+name: health-tree
+description: Umbrella chart for demo stack
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: kafka
+    version: 0.1.0
+    repository: "file://charts/kafka"
+  - name: opensearch
+    version: 0.1.0
+    repository: "file://charts/opensearch"
+  - name: neo4j
+    version: 0.1.0
+    repository: "file://charts/neo4j"
+  - name: wolfram-scorer
+    version: 0.1.0
+    repository: "file://charts/wolfram-scorer"
+  - name: indexer
+    version: 0.1.0
+    repository: "file://charts/indexer"
+  - name: upserter
+    version: 0.1.0
+    repository: "file://charts/upserter"

@@ -1,0 +1,16 @@
+global:
+  kafka:
+    bootstrapServers: "kafka:9092"
+  opensearch:
+    url: "http://opensearch:9200"
+    indexPrefix: "events-"
+  neo4j:
+    uri: "bolt://neo4j:7687"
+    user: "neo4j"
+    password: "test"
+  topics:
+    - "ems.licensing.events→compliance"
+    - "ems.encounter.metadata→analytics"
+    - "ems.transport.status→dash"
+    - "ems.sanctions.events→compliance"
+    - "ems.vehicle.status→ops"

@@ -1,0 +1,4 @@
+apiVersion: v2
+name: opensearch
+version: 0.1.0
+appVersion: "2"

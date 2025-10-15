@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: event-indexer }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: event-indexer } }
+  template:
+    metadata: { labels: { app: event-indexer } }
+    spec:
+      containers:
+        - name: event-indexer
+          image: {{ .Values.image }}
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.global.kafka.bootstrapServers | default "kafka:9092" | quote }}
+            - name: KAFKA_TOPICS
+              value: {{ join "," .Values.global.topics | quote }}
+            - name: OPENSEARCH_URL
+              value: {{ .Values.global.opensearch.url | quote }}
+            - name: OPENSEARCH_INDEX_PREFIX
+              value: {{ .Values.global.opensearch.indexPrefix | quote }}

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: graph-upserter }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: graph-upserter } }
+  template:
+    metadata: { labels: { app: graph-upserter } }
+    spec:
+      containers:
+        - name: graph-upserter
+          image: {{ .Values.image }}
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.global.kafka.bootstrapServers | default "kafka:9092" | quote }}
+            - name: KAFKA_TOPICS
+              value: {{ join "," (list "ems.licensing.events→compliance" "ems.encounter.metadata→analytics") | quote }}
+            - name: NEO4J_URI
+              value: {{ .Values.global.neo4j.uri | quote }}
+            - name: NEO4J_USER
+              value: {{ .Values.global.neo4j.user | quote }}
+            - name: NEO4J_PASSWORD
+              value: {{ .Values.global.neo4j.password | quote }}

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata: { name: wolfram-scorer }
+spec:
+  selector: { app: wolfram-scorer }
+  ports: [{ name: http, port: {{ .Values.port }}, targetPort: {{ .Values.port }} }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: wolfram-scorer }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: wolfram-scorer } }
+  template:
+    metadata: { labels: { app: wolfram-scorer } }
+    spec:
+      containers:
+        - name: wolfram-scorer
+          image: {{ .Values.image }}
+          env:
+            - { name: PORT, value: "{{ .Values.port }}" }
+          ports: [{ containerPort: {{ .Values.port }} }]

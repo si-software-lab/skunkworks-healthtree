@@ -1,0 +1,6 @@
+topics:
+  - ems.licensing.events→compliance
+  - ems.encounter.metadata→analytics
+  - ems.transport.status→dash
+  - ems.sanctions.events→compliance
+  - ems.vehicle.status→ops

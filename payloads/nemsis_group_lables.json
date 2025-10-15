@@ -1,0 +1,15 @@
+{
+  "groups": {
+    "demographics": ["ePatient.13", "ePatient.14", "ePatient.15", "ePatient.17"],
+    "chief_complaint": ["eSituation.09", "eSituation.10", "eSituation.11"],
+    "provider_impression": ["eSituation.12", "eSituation.13"],
+    "vitals": ["eVitals.06","eVitals.10","eVitals.12","eVitals.20","eVitals.22","eVitals.24"],
+    "procedures": ["eProcedures.03","eProcedures.06","eProcedures.07","eProcedures.10"],
+    "medications": ["eMedications.03","eMedications.05","eMedications.06","eMedications.07"],
+    "ekg_cardiac": ["eExam.17","eExam.18","eArrest.11","eDevice.01"],
+    "scene_context": ["eScene.01","eScene.09","eScene.17"],
+    "times": ["eTimes.05","eTimes.06","eTimes.07","eTimes.11"],
+    "geography": ["inc_lat","inc_lon","census_block","drive_time_to_facility"],
+    "history_dx": ["icd10_*","prior_encounters_*"]
+  }
+}

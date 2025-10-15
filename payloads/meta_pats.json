@@ -1,0 +1,259 @@
+{
+  "Captain Caveman and the Teen Angels": {
+    "Captain Caveman": {
+      "series": "Captain Caveman and the Teen Angels",
+      "gender": "male",
+      "age": "mi_prehistoric",
+      "ethnicity": "n/a",
+      "species": "prehistoric human",
+      "occupation": "superhero",
+      "location": "prehistoric times",
+      "appearances": 40
+    }
+  },
+  "Dynomutt, Dog Wonder": {
+    "Blue Falcon": {
+      "series": "Dynomutt, Dog Wonder",
+      "gender": "male",
+      "age": "mi_prime_adult",
+      "ethnicity": "ce_Caucasian",
+      "species": "human",
+      "occupation": "superhero",
+      "location": "USA"
+    },
+    "Dynomutt": {
+      "series": "Dynomutt, Dog Wonder",
+      "gender": "male",
+      "age": "mi_recently_assembled_robot",
+      "ethnicity": "n/a",
+      "species": "robot dog",
+      "occupation": "sidekick",
+      "location": "USA"
+    }
+  },
+  "Hong Kong Phooey": {
+    "Hong Kong Phooey": {
+      "series": "Hong Kong Phooey",
+      "gender": "male",
+      "age": "mi_mature_martial_artist_dog",
+      "ethnicity": "n/a",
+      "species": "dog",
+      "occupation": "janitor/superhero",
+      "location": "USA"
+    }
+  },
+  "Speed Buggy": {
+    "Speed Buggy": {
+      "series": "Speed Buggy",
+      "gender": "mi_male",
+      "age": "mi_newly_built_vehicle",
+      "ethnicity": "n/a",
+      "species": "car",
+      "occupation": "racer",
+      "location": "USA"
+    }
+  },
+  "The Atom Ant Show": {
+    "Atom Ant": {
+      "series": "The Atom Ant Show",
+      "gender": "male",
+      "age": "mi_mature_super_ant",
+      "ethnicity": "n/a",
+      "species": "ant",
+      "occupation": "superhero",
+      "location": "USA"
+    }
+  },
+  "The Atom Ant/Secret Squirrel Show": {
+    "Morocco Mole": {
+      "series": "The Atom Ant/Secret Squirrel Show",
+      "gender": "male",
+      "age": "mi_adult_sidekick",
+      "ethnicity": "n/a",
+      "species": "mole",
+      "occupation": "secret agent",
+      "location": "USA"
+    },
+    "Secret Squirrel": {
+      "series": "The Atom Ant/Secret Squirrel Show",
+      "gender": "male",
+      "age": "mi_adult_agent",
+      "ethnicity": "n/a",
+      "species": "squirrel",
+      "occupation": "secret agent",
+      "location": "USA"
+    }
+  },
+  "The Flintstones": {
+    "Bamm-Bamm Rubble": {
+      "series": "The Flintstones",
+      "gender": "male",
+      "age": "ce_toddler",
+      "ethnicity": "ce_Caucasian",
+      "species": "human",
+      "occupation": "infant",
+      "location": "Bedrock",
+      "appearances": 59
+    },
+    "Barney Rubble": {
+      "series": "The Flintstones",
+      "gender": "male",
+      "age": "ce_35-40",
+      "ethnicity": "ce_Caucasian",
+      "species": "human",
+      "occupation": "quarry worker",
+      "location": "Bedrock",
+      "appearances": 166
+    },
+    "Betty Rubble": {
+      "series": "The Flintstones",
+      "gender": "female",
+      "age": "ce_30-35",
+      "ethnicity": "ce_Caucasian",
+      "species": "human",
+      "occupation": "homemaker",
+      "location": "Bedrock",
+      "appearances": 166
+    },
+    "Dino": {
+      "series": "The Flintstones",
+      "gender": "male",
+      "age": "mi_young_dino_pet",
+      "ethnicity": "n/a",
+      "species": "dinosaur",
+      "occupation": "pet",
+      "location": "Bedrock"
+    },
+    "Fred Flintstone": {
+      "series": "The Flintstones",
+      "gender": "male",
+      "age": "ce_35-40",
+      "ethnicity": "ce_Caucasian",
+      "species": "human",
+      "occupation": "quarry worker",
+      "location": "Bedrock",
+      "appearances": 166
+    },
+    "Pebbles Flintstone": {
+      "series": "The Flintstones",
+      "gender": "female",
+      "age": "ce_infant",
+      "ethnicity": "ce_Caucasian",
+      "species": "human",
+      "occupation": "infant",
+      "location": "Bedrock",
+      "appearances": 59
+    },
+    "Wilma Flintstone": {
+      "series": "The Flintstones",
+      "gender": "female",
+      "age": "ce_30-35",
+      "ethnicity": "ce_Caucasian",
+      "species": "human",
+      "occupation": "homemaker",
+      "location": "Bedrock",
+      "appearances": 166
+    }
+  },
+  "The Huckleberry Hound Show": {
+    "Dixie": {
+      "series": "The Huckleberry Hound Show",
+      "gender": "male",
+      "age": "mi_juvenile_mouse",
+      "ethnicity": "n/a",
+      "species": "mouse",
+      "occupation": "n/a",
+      "location": "USA"
+    },
+    "Mr. Jinks": {
+      "series": "The Huckleberry Hound Show",
+      "gender": "male",
+      "age": "mi_adult_cat",
+      "ethnicity": "n/a",
+      "species": "cat",
+      "occupation": "n/a",
+      "location": "USA"
+    },
+    "Pixie": {
+      "series": "The Huckleberry Hound Show",
+      "gender": "male",
+      "age": "mi_juvenile_mouse",
+      "ethnicity": "n/a",
+      "species": "mouse",
+      "occupation": "n/a",
+      "location": "USA"
+    }
+  },
+  "The Magilla Gorilla Show": {
+    "Magilla Gorilla": {
+      "series": "The Magilla Gorilla Show",
+      "gender": "male",
+      "age": "mi_adult_gorilla",
+      "ethnicity": "n/a",
+      "species": "gorilla",
+      "occupation": "pet",
+      "location": "USA"
+    }
+  },
+  "The New Shmoo": {
+    "The Shmoo": {
+      "series": "The New Shmoo",
+      "gender": "mi_male",
+      "age": "mi_ageless_creature",
+      "ethnicity": "n/a",
+      "species": "shmoo",
+      "occupation": "companion",
+      "location": "USA"
+    }
+  },
+  "The Quick Draw McGraw Show": {
+    "Augie Doggie": {
+      "series": "The Quick Draw McGraw Show",
+      "gender": "male",
+      "age": "ce_young_pup",
+      "ethnicity": "n/a",
+      "species": "dog",
+      "occupation": "student",
+      "location": "USA"
+    },
+    "Doggie Daddy": {
+      "series": "The Quick Draw McGraw Show",
+      "gender": "male",
+      "age": "ce_parental_age",
+      "ethnicity": "n/a",
+      "species": "dog",
+      "occupation": "father",
+      "location": "USA"
+    },
+    "Snagglepuss": {
+      "series": "The Quick Draw McGraw Show",
+      "gender": "male",
+      "age": "mi_middle-aged_cat",
+      "ethnicity": "n/a",
+      "species": "mountain lion",
+      "occupation": "actor",
+      "location": "USA",
+      "appearances": 32
+    }
+  },
+  "The Yogi Bear Show": {
+    "Ranger Smith": {
+      "series": "The Yogi Bear Show",
+      "gender": "male",
+      "age": "ce_middle-aged_adult",
+      "ethnicity": "ce_Caucasian",
+      "species": "human",
+      "occupation": "park ranger",
+      "location": "Jellystone Park"
+    },
+    "Yakky Doodle": {
+      "series": "The Yogi Bear Show",
+      "gender": "male",
+      "age": "ce_youngling",
+      "ethnicity": "n/a",
+      "species": "duck",
+      "occupation": "n/a",
+      "location": "USA"
+    }
+  }
+}

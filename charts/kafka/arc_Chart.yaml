@@ -1,0 +1,9 @@
+apiVersion: v2
+name: kafka
+description: Deploys Apache Kafka for streaming events
+version: 0.1.0
+appVersion: 3.7.0
+dependencies:
+  - name: zookeeper
+    version: 10.1.0
+    repository: https://charts.bitnami.com/bitnami
