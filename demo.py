@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-HealthTree Demo — Console banner + author metadata + OpenSearch client,
+HealthTree Demo — 
 with optional Neo4j bolt-on analytics and MariaDB to/from pathways.
 
 Features:
-- ASCII banner (pyfiglet), author metadata (flat or nested JSON)
+- ASCII text console banner 
+- Author metadata 
+- OpenSearch client
 - OpenSearch client with preflight auto-detect: HTTP/HTTPS + cert handling
 - Optional Neo4j enrichment
 - Optional MariaDB/MySQL persistence
@@ -25,20 +27,31 @@ Neo4j (optional):
 
 MariaDB/MySQL (optional):
   MDB_HOST, MDB_PORT, MDB_USER, MDB_PASS, MDB_DB
+
+Wolfram Data Science (optional):
+  WOLFRAM_URI, WOLFRAM_USER, WOLFRAM_PASS
 """
 
 from __future__ import annotations
-
 import json
 import os
 import sys
+import json
 import time
+import argparse
 import logging
 import logging.config
-from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
+from datetime import datetime
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
+
+try:
+    # Prefer maintained fork that preserves the 'kafka' namespace
+    from kafka import KafkaProducer  # provided by kafka-python-ng
+except Exception:
+    KafkaProducer = None
+
 
 # ---------- Optional UX niceties ----------
 try:
@@ -125,7 +138,6 @@ class Author:
 
 def _coalesce_flat_or_nested(d: Dict[str, Any]) -> Tuple[str, Author]:
     report_title = os.getenv("REPORT_TITLE") or d.get("report title") or "HealthTree Demo"
-
     flat_name = d.get("author name")
     if flat_name:
         author = Author(
@@ -190,6 +202,44 @@ def render_banner(report_title: str, author: Author) -> str:
         f"{Fore.YELLOW}Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}",
     ]
     return "\n".join([ln for ln in lines if ln.strip()])
+
+
+
+def load_demo():
+    if KafkaProducer is None:
+        print("KafkaProducer not installed; skipping HB demo load.")
+        return None, None
+
+    BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+    try:
+        producer = KafkaProducer(
+            bootstrap_servers=BOOTSTRAP,
+            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+            linger_ms=50,
+            acks="all",
+        )
+    except Exception as e:
+        print(f"Kafka unavailable at {BOOTSTRAP}: {e}. Skipping HB demo load.")
+        return BOOTSTRAP, None
+
+    with open("payloads/hb_demo.json") as f:
+        hb = json.load(f)
+    for series, chars in hb.items():
+        for name, a in chars.items():
+            evt = {
+                "event_id": f"hb-{series}-{name}",
+                "type": "license_update",
+                "provider_id": f"hb-{name}",
+                "license_status": "active"
+            }
+            producer.send("ems.licensing.events.compliance", evt)  # ASCII topic
+    producer.flush()
+    print("Loaded HB demo events.")
+    return BOOTSTRAP, producer
+
+def parse_args():
+    p = argparse.ArgumentParser(description="HealthTree Demo")
+    p.add_argument("--no-banner", action="store_true", help )
 
 
 # =============================================================================

@@ -19,20 +19,29 @@ perfect — here’s a tidy “project drop” with everything we’ve produced 
 
 Project Structure
 ```text
-
 healthtree-demo/
 ├─ README.md
 ├─ .gitignore
 ├─ provider_directory/
 │  ├─ requirements.txt
 │  └─ generate_provider_directory.py
+├─ tools/
+│  ├─ seed_providers_to_kafka.py
+│  └─ setup_topics.py
+├─ services/
+│  └─ wolfram_scorer/
+│     ├─ Dockerfile
+│     ├─ requirements.txt
+│     └─ app.py                 # FastAPI
+├─ opensearch/
+│  ├─ docker-compose.opensearch.yml
+│  └─ demo.py
 └─ k8s/
    └─ kafka/
       ├─ values.yaml
       ├─ create_namespace.sh
       ├─ create_kafka_secret.sh
       └─ install_kafka.sh
-
 ```
 
 ⸻
@@ -723,11 +732,13 @@ skunkworks-healthtree/
 ├── README.md
 │
 ├── charts/                            # Individual Helm subcharts (K8s deployables)
-│   ├── kafka/
-│   │   ├── Chart.yaml
-│   │   ├── values.yaml
-│   │   └── templates/
-│   │       └── kafka-deployment.yaml
+│   └── kafka/
+│       ├── Chart.yaml               ← helm metadata and k8s for orchestration, microservices: event-driven architecture inside kube  
+│       ├── values.yaml              ← configuration for Bitnami Kafka + SASL, helm k8s (chart dir) for apache
+│       └── templates/               ← guidance
+│           ├── deployment.yaml      ← StatefulSet for Kafka broker
+│           ├── service.yaml         ← Internal ClusterIP Kafka service
+│           └── kafka-deployment.yaml
 │   ├── opensearch/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml
@@ -774,8 +785,8 @@ skunkworks-healthtree/
 │   └── index_template.json            # OpenSearch mapping / template
 │
 ├── tools/
-│   ├── seed_providers.py              # Faker-based generator + Kafka producer
-│   ├── load_hb_demo.py                # Small loader for cartoon cohort
+│   ├── siUtils_seed_providers.py              # Faker-based generator + Kafka producer
+│   ├── load_demo.py                # Small loader for cartoon cohort
 │   └── setup_topics.py                # Create Kafka topics programmatically
 │
 ├── notebooks/
@@ -791,31 +802,6 @@ skunkworks-healthtree/
     ├── architecture.md                # Stack overview + dataflow diagram
     ├── api_endpoints.md               # REST endpoints (Wolfram scorer, etc.)
     └── helm_deploy.md                 # K8s deployment guide
-
-```
-
-
-```text
-├── charts/
-│   └── kafka/
-│       ├── Chart.yaml               ← helm metadata and k8s for orchestration, microservices: event-driven architecture inside kube  
-│       ├── values.yaml              ← configuration for Bitnami Kafka + SASL, helm k8s (chart dir) for apache
-│       └── templates/               ← guidance
-│           ├── deployment.yaml      ← StatefulSet for Kafka broker
-│           └── service.yaml         ← Internal ClusterIP Kafka service
-├── data/                            ← developer-generated definitions, scratches, consoles, stashed files
-│   ├── lbdw.md                      ← late-binding data warehouse legacy model
-│   ├── jd.md                        ← job description
-│   ├── author.json                  ← metadata
-│   ├── demo_cohort.json             ← population health mgmt (PHM) sales demo fictional cohort  
-│   ├── hb_bulk.ndjson               ← prebuilt NDJSON for `_bulk` ingestion (generated with gen_bulk heavy or lite)
-│   └── voc.json                     ← volatile organic compounds dictionary compiled from scraping niosh and epa
-├── docs/                            ← documentation and developer metadata
-├── fhir_to_omop_agent               ←
-│   ├── sample_payloads              ←
-│   ├── README.md                    ←
-│   ├── main.py                      ←
-│   ├── mapping_uscore_to_omop.json  ← 
 ├── logs/                            ← logging  
 ├── utils/                           ← mini utilities for semantic interoperability  
 │   ├── logging_config.py            ← logging configuration as a json dictionary
