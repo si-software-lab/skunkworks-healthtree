@@ -579,7 +579,7 @@ def persist_hits_to_mariadb(conn, hits: List[Dict[str, Any]]) -> None:
 # Main
 # =============================================================================
 
-def main() -> None:
+def main_engine() -> None:
     # ---- Always print the banner FIRST (before any logs)
     author_json = os.getenv("AUTHOR_JSON", "payloads/author.json")
     title, author = load_author_metadata(author_json)
@@ -628,7 +628,7 @@ def main() -> None:
 
 if __name__ in("__main__"):
     try:
-        main()
+        main_engine()
     except KeyboardInterrupt:
         print("\nInterrupted.")
         sys.exit(130)
