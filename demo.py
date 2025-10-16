@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-HealthTree Demo — 
+HealthTree Demo —
 with optional Neo4j bolt-on analytics and MariaDB to/from pathways.
 
 Features:
-- ASCII text console banner 
-- Author metadata 
-- OpenSearch client
+- ASCII text console banner (always prints)
+- Author metadata (handles flat and nested shapes)
 - OpenSearch client with preflight auto-detect: HTTP/HTTPS + cert handling
 - Optional Neo4j enrichment
 - Optional MariaDB/MySQL persistence
+- Optional Kafka HB loader (flag: --load-hb)
 
 Env (common):
   AUTHOR_JSON           : path to author JSON (optional)
@@ -27,13 +27,9 @@ Neo4j (optional):
 
 MariaDB/MySQL (optional):
   MDB_HOST, MDB_PORT, MDB_USER, MDB_PASS, MDB_DB
-
-Wolfram Data Science (optional):
-  WOLFRAM_URI, WOLFRAM_USER, WOLFRAM_PASS
 """
 
 from __future__ import annotations
-import json
 import os
 import sys
 import json
@@ -46,21 +42,21 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
+# ---------- Kafka (optional) ----------
 try:
-    # Prefer maintained fork that preserves the 'kafka' namespace
-    from kafka import KafkaProducer  # provided by kafka-python-ng
+    # provided by kafka-python-ng
+    from kafka import KafkaProducer  # type: ignore
 except Exception:
-    KafkaProducer = None
-
+    KafkaProducer = None  # type: ignore
 
 # ---------- Optional UX niceties ----------
 try:
-    import pyfiglet
+    import pyfiglet  # type: ignore
 except ModuleNotFoundError:
-    pyfiglet = None
+    pyfiglet = None  # type: ignore
 
 try:
-    from colorama import Fore, Style, init as colorama_init
+    from colorama import Fore, Style, init as colorama_init  # type: ignore
     colorama_init(autoreset=True)
 except ModuleNotFoundError:
     class _DummyFore:
@@ -72,7 +68,7 @@ except ModuleNotFoundError:
 
 # ---------- Requests for preflight ----------
 try:
-    import requests
+    import requests  # type: ignore
 except ModuleNotFoundError:
     requests = None  # preflight will degrade gracefully
 
@@ -137,9 +133,20 @@ class Author:
 
 
 def _coalesce_flat_or_nested(d: Dict[str, Any]) -> Tuple[str, Author]:
+    """
+    Handles three shapes:
+    A) Flat keys:
+       {"report title": "...", "author name": "Jane Doe", ...}
+    B) Nested by author name:
+       {"Jane Doe": {"author credential": "...", ...}, "report title": "..."}
+    C) Nested under "author name":
+       {"author name": {"Jane Doe": {...}}}
+    """
     report_title = os.getenv("REPORT_TITLE") or d.get("report title") or "HealthTree Demo"
+
+    # Case A: simple flat
     flat_name = d.get("author name")
-    if flat_name:
+    if isinstance(flat_name, str):
         author = Author(
             name=flat_name,
             credential=d.get("author credential"),
@@ -150,12 +157,29 @@ def _coalesce_flat_or_nested(d: Dict[str, Any]) -> Tuple[str, Author]:
         )
         return report_title, author
 
+    # Case C: nested under "author name"
+    if isinstance(flat_name, dict):
+        first_key = next(iter(flat_name.keys()), None)
+        if first_key:
+            sub = flat_name[first_key] or {}
+            credential = sub.get("author credential")
+            author = Author(
+                name=f"{first_key}{', ' + credential if credential else ''}",
+                credential=credential,
+                affiliation=sub.get("author affiliation"),
+                title=sub.get("author title"),
+                company=sub.get("author company name"),
+                address=sub.get("author address"),
+            )
+            return report_title, author
+
+    # Case B: nested directly by author name at top level
     known = {"report title", "author name", "author credential", "author affiliation",
              "author title", "author company name", "author address"}
     nested_candidates = [k for k in d if k not in known and isinstance(d[k], dict)]
     if nested_candidates:
         display_name = nested_candidates[0]
-        sub = d[display_name]
+        sub = d[display_name] or {}
         credential = sub.get("author credential")
         author = Author(
             name=f"{display_name}{', ' + credential if credential else ''}",
@@ -167,6 +191,7 @@ def _coalesce_flat_or_nested(d: Dict[str, Any]) -> Tuple[str, Author]:
         )
         return report_title, author
 
+    # Fallback
     return report_title, Author(name="HealthTree Team")
 
 
@@ -204,8 +229,12 @@ def render_banner(report_title: str, author: Author) -> str:
     return "\n".join([ln for ln in lines if ln.strip()])
 
 
+# =============================================================================
+# Kafka HB demo loader (optional)
+# =============================================================================
 
 def load_demo():
+    """Optionally load Hanna-Barbera events into Kafka."""
     if KafkaProducer is None:
         print("KafkaProducer not installed; skipping HB demo load.")
         return None, None
@@ -222,8 +251,16 @@ def load_demo():
         print(f"Kafka unavailable at {BOOTSTRAP}: {e}. Skipping HB demo load.")
         return BOOTSTRAP, None
 
-    with open("payloads/hb_demo.json") as f:
+    hb_path = Path("payloads/hb_demo.json")
+    if not hb_path.exists():
+        print("payloads/hb_demo.json not found; skipping HB demo load.")
+        return BOOTSTRAP, producer
+
+    with hb_path.open() as f:
         hb = json.load(f)
+
+    # ASCII topic name (no Unicode arrows)
+    topic = "ems.licensing.events.compliance"
     for series, chars in hb.items():
         for name, a in chars.items():
             evt = {
@@ -232,14 +269,21 @@ def load_demo():
                 "provider_id": f"hb-{name}",
                 "license_status": "active"
             }
-            producer.send("ems.licensing.events.compliance", evt)  # ASCII topic
+            producer.send(topic, evt)
     producer.flush()
     print("Loaded HB demo events.")
     return BOOTSTRAP, producer
 
+
+# =============================================================================
+# CLI
+# =============================================================================
+
 def parse_args():
     p = argparse.ArgumentParser(description="HealthTree Demo")
-    p.add_argument("--no-banner", action="store_true", help )
+    p.add_argument("--load-hb", action="store_true",
+                   help="Load Hanna-Barbera demo events to Kafka (optional)")
+    return p.parse_args()
 
 
 # =============================================================================
@@ -305,8 +349,8 @@ def preflight_detect_scheme(host: str, port: int, explicit_ssl: Optional[bool], 
     schemes = (("http", False), ("https", True))
     order = schemes if _is_localhost(host) else (("https", True), ("http", False))
 
-    for attempt in range(retries):
-        for scheme, ssl_flag in order:
+    for _attempt in range(retries):
+        for scheme, _ssl_flag in order:
             base = f"{scheme}://{host}:{port}/"
             if scheme == "http":
                 if _try(base, verify=False):
@@ -326,7 +370,8 @@ def preflight_detect_scheme(host: str, port: int, explicit_ssl: Optional[bool], 
     # Fallback heuristic if nothing answered
     use_ssl = not _is_localhost(host)
     verify_certs = use_ssl
-    log.warning("Preflight could not confirm endpoint; falling back to use_ssl=%s verify_certs=%s", use_ssl, verify_certs)
+    log.warning("Preflight could not confirm endpoint; falling back to use_ssl=%s verify_certs=%s",
+                use_ssl, verify_certs)
     return use_ssl, verify_certs
 
 
@@ -360,7 +405,7 @@ def os_client() -> "OpenSearch":
     except Exception as e:
         hint = ""
         if _is_localhost(cfg["host"]):
-            hint = " (Hint: ensure the container is up and port is mapped. Try: docker ps; and curl http://localhost:9200/)"
+            hint = " (Hint: ensure the container is up and port is mapped. Try: docker ps; and curl http://localhost:9200/ or curl -k https://localhost:9200/)"
         raise RuntimeError(f"Failed OpenSearch connection: {e}{hint}") from e
 
 
@@ -535,14 +580,16 @@ def persist_hits_to_mariadb(conn, hits: List[Dict[str, Any]]) -> None:
 # =============================================================================
 
 def main() -> None:
-    # ---- Print the banner FIRST (before any logs)
-    author_json = os.getenv("AUTHOR_JSON")
+    # ---- Always print the banner FIRST (before any logs)
+    author_json = os.getenv("AUTHOR_JSON", "payloads/author.json")
     title, author = load_author_metadata(author_json)
     print(render_banner(title, author))
 
     # ---- Now configure logging (logs appear after banner)
     setup_logging()
     log = logging.getLogger("main")
+
+    args = parse_args()
 
     # OpenSearch
     try:
@@ -552,10 +599,10 @@ def main() -> None:
         log.error("%s", e)
         sys.exit(2)
 
-    # Neo4j enrichment
+    # Neo4j enrichment (optional)
     hits = enhance_with_neo4j(hits)
 
-    # MariaDB persistence
+    # MariaDB persistence (optional)
     db = mariadb_connect()
     if db:
         persist_hits_to_mariadb(db, hits)
@@ -563,6 +610,11 @@ def main() -> None:
             db.close()
         except Exception:
             pass
+
+    # Optional: load HB events to Kafka (only when asked)
+    if args.load_hb:
+        print("Loading HB demo events to Kafka (optional step)…")
+        load_demo()
 
     # print summary
     print(f"\n{Fore.BLUE}{Style.BRIGHT}Search Results (top {len(hits)}):{Style.RESET_ALL}")
@@ -574,7 +626,7 @@ def main() -> None:
     print(f"\n{Fore.GREEN}Done.{Style.RESET_ALL}")
 
 
-if __name__ == "__main__":
+if __name__ in("__main__"):
     try:
         main()
     except KeyboardInterrupt:
