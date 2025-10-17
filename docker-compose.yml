@@ -45,6 +45,7 @@ services:
       - cluster.name=hb-demo-cluster
       - node.name=hb-node-1
     ulimits:
+      persisted: true
       memlock: { soft: -1, hard: -1 }
     ports:
       - "9200:9200"
