@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HealthTree Demo —
+Public Health Data Interoperability Demo —
 with optional Neo4j bolt-on analytics and MariaDB to/from pathways.
 
 Features:
@@ -20,7 +20,7 @@ OpenSearch (you can omit USE_SSL/VERIFY_CERTS; autodetect will pick):
   USE_SSL=true|false        (explicit override; otherwise auto)
   VERIFY_CERTS=true|false   (explicit override; otherwise auto)
   OS_TIMEOUT                (default 30)
-  OS_DEMO_INDEX             (default healthtree_demo)
+  OS_DEMO_INDEX             (default vi_demo)
 
 Neo4j (optional):
   NEO4J_URI, NEO4J_USER, NEO4J_PASS
@@ -142,7 +142,7 @@ def _coalesce_flat_or_nested(d: Dict[str, Any]) -> Tuple[str, Author]:
     C) Nested under "author name":
        {"author name": {"Jane Doe": {...}}}
     """
-    report_title = os.getenv("REPORT_TITLE") or d.get("report title") or "HealthTree Demo"
+    report_title = os.getenv("REPORT_TITLE") or d.get("report title") or "vi Demo"
 
     # Case A: simple flat
     flat_name = d.get("author name")
@@ -192,23 +192,23 @@ def _coalesce_flat_or_nested(d: Dict[str, Any]) -> Tuple[str, Author]:
         return report_title, author
 
     # Fallback
-    return report_title, Author(name="HealthTree Team")
+    return report_title, Author(name="vi Team")
 
 
 def load_author_metadata(path: Optional[str]) -> Tuple[str, Author]:
     # No logging here—banner prints before log setup.
     if not path:
-        return "HealthTree Demo", Author(name="HealthTree Team")
+        return "vi Demo", Author(name="vi Team")
 
     p = Path(path)
     if not p.exists():
-        return "HealthTree Demo", Author(name="HealthTree Team")
+        return "vi Demo", Author(name="vi Team")
 
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
         return _coalesce_flat_or_nested(data)
     except Exception:
-        return "HealthTree Demo", Author(name="HealthTree Team")
+        return "vi Demo", Author(name="vi Team")
 
 
 def render_banner(report_title: str, author: Author) -> str:
@@ -280,7 +280,7 @@ def load_demo():
 # =============================================================================
 
 def parse_args():
-    p = argparse.ArgumentParser(description="HealthTree Demo")
+    p = argparse.ArgumentParser(description="vi Demo")
     p.add_argument("--load-hb", action="store_true",
                    help="Load Hanna-Barbera demo events to Kafka (optional)")
     return p.parse_args()
@@ -411,7 +411,7 @@ def os_client() -> "OpenSearch":
 
 def os_demo_index_and_search(client: "OpenSearch") -> List[Dict[str, Any]]:
     log = logging.getLogger("opensearch.demo")
-    index = os.getenv("OS_DEMO_INDEX", "healthtree_demo")
+    index = os.getenv("OS_DEMO_INDEX", "vi_demo")
 
     if not client.indices.exists(index=index):
         log.info("Creating index '%s'", index)

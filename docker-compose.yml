@@ -1,5 +1,3 @@
-# docker-compose.yml
-
 services:
   # ---------- Messaging ----------
   zookeeper:
@@ -8,60 +6,72 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: "2181"
       ZOOKEEPER_TICK_TIME: "2000"
+      ZOOKEEPER_SYNC_LIMIT: "5"
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "ruok,stat,mntr,conf,cons,wchc,wchp"
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx256m"
     ports:
       - "2181:2181"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          # open a TCP fd, send 'ruok', read one line, expect 'imok'
+          "bash -c 'exec 3<>/dev/tcp/127.0.0.1/2181 && echo ruok >&3 && IFS= read -r line <&3 && test \"${line}\" = imok'"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 60         # give it plenty of time on cold starts
+      start_period: 20s   # initial warmup window
     restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
     container_name: kafka
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      # Listen on all interfaces in the container, advertise as "kafka" to other containers
-      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092"
       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
-      KAFKA_BROKER_ID: "1"
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
     ports:
       - "9092:9092"
     restart: unless-stopped
 
-  # ---------- OpenSearch + Dashboards ----------
+  # ---------- OpenSearch + Dashboards (security disabled for local dev) ----------
   opensearch:
     image: opensearchproject/opensearch:2.15.0
     container_name: opensearch
+    restart: unless-stopped
     environment:
       - discovery.type=single-node
       - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
-      # Make 2.12+ images happy and also disable security for a frictionless demo
-      - plugins.security.disabled=true
-      - DISABLE_SECURITY_PLUGIN=true
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=AdminPass_123
+      - DISABLE_SECURITY_PLUGIN=true          # <- disables the security plugin so it starts cleanly
       - cluster.name=hb-demo-cluster
       - node.name=hb-node-1
+      - bootstrap.memory_lock=true
     ulimits:
-      persisted: true
-      memlock: { soft: -1, hard: -1 }
+      memlock:
+        soft: -1
+        hard: -1
     ports:
       - "9200:9200"
       - "9600:9600"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:9200 >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 30
-    volumes:
-      - opensearch-data:/usr/share/opensearch/data
-    restart: unless-stopped
 
   dashboards:
     image: opensearchproject/opensearch-dashboards:2.15.0
     container_name: opensearch-dashboards
+    restart: unless-stopped
     environment:
       - OPENSEARCH_HOSTS=["http://opensearch:9200"]
       - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
@@ -70,70 +80,62 @@ services:
     depends_on:
       opensearch:
         condition: service_healthy
-    restart: unless-stopped
 
   # ---------- Graph DB ----------
   neo4j:
-    image: neo4j:5
     container_name: neo4j
+    image: neo4j:5
+    restart: unless-stopped
     environment:
-      # Must be >= 8 chars
-      - NEO4J_AUTH=neo4j/StrongerPw_123
-      # Proper plugin var for Neo4j 5
-      - NEO4J_PLUGINS=["apoc"]
-      # Uncomment if you still see min-length complaints (rare):
-      # - NEO4J_dbms_security_auth__minimum__password__length=8
+      - NEO4J_AUTH=neo4j/neo4j_test_123        # >= 8 chars to satisfy v5 default policy
+      - NEO4J_PLUGINS=["apoc"]                 # renamed from NEO4JLABS_PLUGINS in v5
     ports:
       - "7474:7474"
       - "7687:7687"
-    volumes:
-      - neo4j-data:/data
-      - neo4j-plugins:/plugins
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
 
   # ---------- Your services ----------
   wolfram-scorer:
     build: ./services/wolfram_scorer
-    container_name: wolfram-scorer
+    restart: unless-stopped
     environment:
       - PORT=8088
     ports:
       - "8088:8088"
-    restart: unless-stopped
+    depends_on:
+      - kafka
 
   event-indexer:
     build: ./services/opensearch_indexer
-    container_name: event-indexer
+    restart: unless-stopped
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      # ASCII-only topic names (no Unicode arrows)
-      - KAFKA_TOPICS=ems.licensing.events.compliance,ems.encounter.metadata.analytics,ems.transport.status.dash,ems.sanctions.events.compliance,ems.vehicle.status.ops
+      # simple CSV topic list (no fancy arrows)
+      - KAFKA_TOPICS=ems.licensing.events,ems.encounter.metadata,ems.transport.status,ems.sanctions.events,ems.vehicle.status
       - OPENSEARCH_URL=http://opensearch:9200
       - OPENSEARCH_INDEX_PREFIX=events-
     depends_on:
+      kafka:
+        condition: service_healthy
       opensearch:
         condition: service_healthy
-      kafka:
-        condition: service_started
-    restart: unless-stopped
 
   graph-upserter:
     build: ./services/neo4j_upserter
-    container_name: graph-upserter
+    restart: unless-stopped
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - KAFKA_TOPICS=ems.licensing.events.compliance,ems.encounter.metadata.analytics
+      - KAFKA_TOPICS=ems.licensing.events,ems.encounter.metadata
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=StrongerPw_123
+      - NEO4J_PASSWORD=neo4j_test_123
     depends_on:
-      neo4j:
-        condition: service_started
       kafka:
-        condition: service_started
-    restart: unless-stopped
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
 
-volumes:
-  opensearch-data:
-  neo4j-data:
-  neo4j-plugins:

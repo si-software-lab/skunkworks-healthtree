@@ -725,7 +725,7 @@ Implementing dbt models and automation pipelines requires:
                      │     Helm / kubectl / Colima│
                      └────────────────────────────┘
 
-skunkworks-healthtree/
+skunkworks/
 ├── Chart.yaml                         # ← Umbrella Helm chart (root, not inside indexer/)
 ├── values.yaml                        # Global defaults (OpenSearch, Neo4j, Kafka, etc.)
 ├── docker-compose.yml                 # Local all-in-one demo
@@ -855,7 +855,7 @@ Open Dashboards at http://localhost:5601 (no auth, dev-only).
 ### 2) _RUN THE PYTHON DEMO_
 ```bash
 # bash
-python3 demo.py
+python3 start_demo.py
 ```
 
 Expected output includes:
