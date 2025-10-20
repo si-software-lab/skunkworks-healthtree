@@ -1,141 +1,74 @@
-services:
-  # ---------- Messaging ----------
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.6.1
-    container_name: zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: "2181"
-      ZOOKEEPER_TICK_TIME: "2000"
-      ZOOKEEPER_SYNC_LIMIT: "5"
-      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "ruok,stat,mntr,conf,cons,wchc,wchp"
-      KAFKA_HEAP_OPTS: "-Xms256m -Xmx256m"
-    ports:
-      - "2181:2181"
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          # open a TCP fd, send 'ruok', read one line, expect 'imok'
-          "bash -c 'exec 3<>/dev/tcp/127.0.0.1/2181 && echo ruok >&3 && IFS= read -r line <&3 && test \"${line}\" = imok'"
-        ]
-      interval: 5s
-      timeout: 3s
-      retries: 60         # give it plenty of time on cold starts
-      start_period: 20s   # initial warmup window
-    restart: unless-stopped
+version: "3.9"
 
+services:
   kafka:
-    image: confluentinc/cp-kafka:7.6.1
+    image: bitnami/kafka:latest
     container_name: kafka
-    depends_on:
-      zookeeper:
-        condition: service_healthy
     environment:
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_LISTENERS: "PLAINTEXT://:9092"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
-      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
-      KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_NODE_ID=${KAFKA_BROKER_ID}
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=${KAFKA_BROKER_ID}@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=1
     ports:
       - "9092:9092"
-    restart: unless-stopped
+    networks: [demo]
 
-  # ---------- OpenSearch + Dashboards (security disabled for local dev) ----------
-  opensearch:
-    image: opensearchproject/opensearch:2.15.0
-    container_name: opensearch
-    restart: unless-stopped
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on: [kafka, connect]
     environment:
-      - discovery.type=single-node
-      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
-      - DISABLE_SECURITY_PLUGIN=true          # <- disables the security plugin so it starts cleanly
-      - cluster.name=hb-demo-cluster
-      - node.name=hb-node-1
-      - bootstrap.memory_lock=true
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME=connect
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS=http://connect:8083
     ports:
-      - "9200:9200"
-      - "9600:9600"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
+      - "8080:8080"
+    networks: [demo]
 
-  dashboards:
-    image: opensearchproject/opensearch-dashboards:2.15.0
-    container_name: opensearch-dashboards
-    restart: unless-stopped
+  connect:
+    image: confluentinc/cp-kafka-connect:7.6.1
+    container_name: connect
+    depends_on: [kafka]
     environment:
-      - OPENSEARCH_HOSTS=["http://opensearch:9200"]
-      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+      - CONNECT_BOOTSTRAP_SERVERS=kafka:9092
+      - CONNECT_REST_ADVERTISED_HOST_NAME=connect
+      - CONNECT_GROUP_ID=connect-cluster
+      - CONNECT_CONFIG_STORAGE_TOPIC=_connect-configs
+      - CONNECT_OFFSET_STORAGE_TOPIC=_connect-offsets
+      - CONNECT_STATUS_STORAGE_TOPIC=_connect-status
+      - CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR=1
+      - CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR=1
+      - CONNECT_STATUS_STORAGE_REPLICATION_FACTOR=1
+      - CONNECT_KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - CONNECT_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE=false
+      - CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE=false
+      - CONNECT_PLUGIN_PATH=/usr/share/java,/connectors
+      # JDBC connector needs to be present under /connectors
+    volumes:
+      - ./connectors:/connectors
+      - ./certs:/certs:ro
     ports:
-      - "5601:5601"
-    depends_on:
-      opensearch:
-        condition: service_healthy
+      - "8083:8083"
+    networks: [demo]
 
-  # ---------- Graph DB ----------
-  neo4j:
-    container_name: neo4j
-    image: neo4j:5
-    restart: unless-stopped
+  app:
+    build: ./app
+    container_name: demo-api
+    depends_on: [kafka]
     environment:
-      - NEO4J_AUTH=neo4j/neo4j_test_123        # >= 8 chars to satisfy v5 default policy
-      - NEO4J_PLUGINS=["apoc"]                 # renamed from NEO4JLABS_PLUGINS in v5
+      - KAFKA_BOOTSTRAP=kafka:9092
+      - DEMO_TOPIC=${DEMO_TOPIC}
     ports:
-      - "7474:7474"
-      - "7687:7687"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 40
+      - "8000:8000"
+    networks: [demo]
 
-  # ---------- Your services ----------
-  wolfram-scorer:
-    build: ./services/wolfram_scorer
-    restart: unless-stopped
-    environment:
-      - PORT=8088
-    ports:
-      - "8088:8088"
-    depends_on:
-      - kafka
-
-  event-indexer:
-    build: ./services/opensearch_indexer
-    restart: unless-stopped
-    environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      # simple CSV topic list (no fancy arrows)
-      - KAFKA_TOPICS=ems.licensing.events,ems.encounter.metadata,ems.transport.status,ems.sanctions.events,ems.vehicle.status
-      - OPENSEARCH_URL=http://opensearch:9200
-      - OPENSEARCH_INDEX_PREFIX=events-
-    depends_on:
-      kafka:
-        condition: service_healthy
-      opensearch:
-        condition: service_healthy
-
-  graph-upserter:
-    build: ./services/neo4j_upserter
-    restart: unless-stopped
-    environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - KAFKA_TOPICS=ems.licensing.events,ems.encounter.metadata
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=neo4j_test_123
-    depends_on:
-      kafka:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
-
+networks:
+  demo: {}

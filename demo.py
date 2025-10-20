@@ -157,6 +157,21 @@ def _coalesce_flat_or_nested(d: Dict[str, Any]) -> Tuple[str, Author]:
         )
         return report_title, author
 
+    # Case C: nested under "author name"
+    if isinstance(flat_name, dict):
+        first_key = next(iter(flat_name.keys()), None)
+        if first_key:
+            sub = flat_name[first_key] or {}
+            credential = sub.get("author credential")
+            author = Author(
+                name=f"{first_key}{', ' + credential if credential else ''}",
+                credential=credential,
+                affiliation=sub.get("author affiliation"),
+                title=sub.get("author title"),
+                company=sub.get("author company name"),
+                address=sub.get("author address"),
+            )
+            return report_title, author
 
     # Case B: nested directly by author name at top level
     known = {"report title", "author name", "author credential", "author affiliation",
@@ -175,23 +190,6 @@ def _coalesce_flat_or_nested(d: Dict[str, Any]) -> Tuple[str, Author]:
             address=sub.get("author address"),
         )
         return report_title, author
-
-
-    # Case C: nested under "author name"
-    if isinstance(flat_name, dict):
-        first_key = next(iter(flat_name.keys()), None)
-        if first_key:
-            sub = flat_name[first_key] or {}
-            credential = sub.get("author credential")
-            author = Author(
-                name=f"{first_key}{', ' + credential if credential else ''}",
-                credential=credential,
-                affiliation=sub.get("author affiliation"),
-                title=sub.get("author title"),
-                company=sub.get("author company name"),
-                address=sub.get("author address"),
-            )
-            return report_title, author
 
     # Fallback
     return report_title, Author(name="vi Team")

@@ -1,0 +1,108 @@
+[
+  {
+    "container": "minio",
+    "showcase_platform": "S3-like object storage in Docker",
+    "narrative_purpose": "Where raw demo files live (ingest starts here).",
+    "inputs": ["CSV, TSV, XLSX, JSON dropped into buckets"],
+    "outputs": ["Objects read by indexers and pipelines"],
+    "key_demo_actions": ["Upload sample datasets", "Version files safely"],
+    "key_metrics": [
+      {"name": "ingest_files_count", "numerator_def": "count(objects_read)", "denominator_def": "N/A"}
+    ]
+  },
+  {
+    "container": "kafka",
+    "showcase_platform": "Event bus (Bitnami Kafka)",
+    "narrative_purpose": "Announces new/changed files and pipeline milestones.",
+    "inputs": ["File-created events", "Pipeline status events"],
+    "outputs": ["Topics consumed by indexers, graph upserter, alerts"],
+    "key_demo_actions": ["Watch topics in UI", "Simulate new data drop"],
+    "key_metrics": [
+      {"name": "events_published", "numerator_def": "count(messages_out)", "denominator_def": "N/A"}
+    ]
+  },
+  {
+    "container": "kafka-ui",
+    "showcase_platform": "Web UI for Kafka",
+    "narrative_purpose": "Let the audience see live events with zero terminal work.",
+    "inputs": ["Kafka topics"],
+    "outputs": ["Readable topic streams"],
+    "key_demo_actions": ["Browse topics", "Tail messages"],
+    "key_metrics": []
+  },
+  {
+    "container": "opensearch",
+    "showcase_platform": "Search + analytics index",
+    "narrative_purpose": "Turns files into fast, queryable records.",
+    "inputs": ["Parsed rows from ingestion service"],
+    "outputs": ["Indexes for dashboards and search"],
+    "key_demo_actions": ["Filter, facet, search sample data"],
+    "key_metrics": [
+      {"name": "indexed_records", "numerator_def": "sum(rows_success)", "denominator_def": "sum(rows_attempted)"}
+    ]
+  },
+  {
+    "container": "opensearch-dashboards",
+    "showcase_platform": "Dashboards",
+    "narrative_purpose": "Tells the story with charts and simple tables.",
+    "inputs": ["OpenSearch indices"],
+    "outputs": ["Visuals for the demo narrative"],
+    "key_demo_actions": ["Click through dashboards", "Ad-hoc searches"],
+    "key_metrics": []
+  },
+  {
+    "container": "neo4j",
+    "showcase_platform": "Graph DB",
+    "narrative_purpose": "Shows relationships (providers ↔ licenses ↔ agencies).",
+    "inputs": ["Upserted entities from pipeline"],
+    "outputs": ["Queryable relationships"],
+    "key_demo_actions": ["Run sample graph queries", "Show neighborhood views"],
+    "key_metrics": [
+      {"name": "graph_nodes_upserted", "numerator_def": "count(nodes_created_or_matched)", "denominator_def": "N/A"}
+    ]
+  },
+  {
+    "container": "fastapi-licensing-api",
+    "showcase_platform": "Thin API (FastAPI)",
+    "narrative_purpose": "Gives a clean API to fetch provider/license facts.",
+    "inputs": ["OpenSearch, Neo4j (read)"],
+    "outputs": ["JSON responses to UI/tools"],
+    "key_demo_actions": ["Call /providers/:id", "Call /licenses/:id"],
+    "key_metrics": [
+      {"name": "api_requests_ok", "numerator_def": "count(http_2xx)", "denominator_def": "count(http_all)"}
+    ]
+  },
+  {
+    "container": "indexer",
+    "showcase_platform": "Ingestion worker (Python)",
+    "narrative_purpose": "Reads MinIO files, parses rows, indexes to OpenSearch.",
+    "inputs": ["MinIO objects", "Kafka events"],
+    "outputs": ["OpenSearch bulk writes", "Kafka status events"],
+    "key_demo_actions": ["Drop a file → watch index growth"],
+    "key_metrics": [
+      {"name": "rows_success", "numerator_def": "count(rows_indexed)", "denominator_def": "count(rows_read)"}
+    ]
+  },
+  {
+    "container": "graph-upserter",
+    "showcase_platform": "Graph worker (Python)",
+    "narrative_purpose": "Converts records into connected graph entities.",
+    "inputs": ["Kafka topic of new/changed records"],
+    "outputs": ["Neo4j MERGE operations"],
+    "key_demo_actions": ["Trigger upsert on new data"],
+    "key_metrics": [
+      {"name": "edges_created", "numerator_def": "count(relationships_created)", "denominator_def": "N/A"}
+    ]
+  },
+  {
+    "container": "metrics-registry",
+    "showcase_platform": "Tiny FastAPI service",
+    "narrative_purpose": "Lets you add or change metric numerator definitions live.",
+    "inputs": ["HTTP POST/PUT with JSON"],
+    "outputs": ["JSON registry file on shared volume"],
+    "key_demo_actions": ["POST new numerator def; pipelines pick it up"],
+    "key_metrics": [
+      {"name": "metric_defs_active", "numerator_def": "count(metric_definitions)", "denominator_def": "N/A"}
+    ]
+  }
+]

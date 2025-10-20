@@ -1,0 +1,32 @@
+{
+  "name": "jdbc-sink-mariadb",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "tasks.max": "1",
+    "topics": "data.load.mariadb.batch.v1",
+
+    "connection.url": "jdbc:mariadb://serverless-eu-central-1.sysp0000.db1.skysql.com:4026/demo_db?useSSL=true&requireSSL=true&verifyServerCertificate=true",
+    "connection.user": "dbpwf04095684",
+    "connection.password": "y9p06wfU4a{QCB}LzExt6cd",
+    "sslmode": "verify-full",
+
+    "auto.create": "true",
+    "auto.evolve": "true",
+
+    "insert.mode": "upsert",
+    "pk.mode": "record_key",
+    "pk.fields": "id",
+
+    "batch.size": "500",
+    "max.retries": "10",
+    "retry.backoff.ms": "2000",
+
+    "delete.enabled": "false",
+    "table.name.format": "demo_batches",
+
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter.schemas.enable": "false"
+  }
+}
