@@ -1,15 +1,28 @@
-# Skunkworks Demo: Provider Directory + Kafka (Helm)
+## Skunkworks Demo: Provider Directory + Kafka (Helm)
 
 
 
 
 
 
+Why it qualifies as a bootstrap demo - 
+Bootstrap in this context means:
+  -	Each service spins up in isolation but is immediately production-patterned (Kafka, Neo4j, OpenSearch, API, etc.);
+  - The cluster can “self-host” analytics and streaming pipelines without any external managed dependencies;
+  - Minimal but complete infrastructure: message bus + search + graph + compute + persistence + orchestration.
 
 
-	•	You’re using app.include_router, which is good — you’re modularising the routing.
-	•	The business logic (reading/writing JSON file) is present and works.
-	w•	For a small API with only a few endpoints, this layout is perfectly fine.
+Let’s unpack the data architecture carefully:
+⸻
+
+
+
+
+
+
+  -	We use app.include_router, which is good — you’re modularising the routing.
+  -	The business logic (reading/writing JSON file) is present and works.
+  -	For a small API with only a few endpoints, this layout is perfectly fine.
 
 
 
@@ -630,6 +643,19 @@ helm upgrade --install "${RELEASE}" "${CHART}" \
 # ToDo	•	add an example producer/consumer pod to validate SASL_SSL connectivity
 # ToDo	•	add a tiny FastAPI microservice that publishes to your topics using these SASL settings
 
+```zsh
+mariadb --host serverless-eu-central-1.sysp0000.db1.skysql.com --port 4026 --user dbpwf04095684 -p --ssl-verify-server-cert
+Enter password:
+```
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MySQL connection id is 442
+Server version: 10.4.32 21.06.17-maxscale MariaDB Server
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MySQL [(none)]> 
 
 
 # _Use Case: FHIR-to-OMOP Mini Agent_ 

@@ -1,3 +1,4 @@
+# fast api app
 # api/main.py
 from fastapi import FastAPI
 from api.routers.metrics import router as metrics_router
