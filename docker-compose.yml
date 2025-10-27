@@ -1,39 +1,25 @@
-version: "3.9"
+# no top-level "version" key
 
 services:
   kafka:
-    image: bitnami/kafka:latest
+    image: ${KAFKA_IMAGE}:${KAFKA_TAG}        # e.g. bitnamilegacy/kafka:3.9.0-debian-12-r12
     container_name: kafka
     environment:
       - KAFKA_ENABLE_KRAFT=yes
       - KAFKA_CFG_PROCESS_ROLES=broker,controller
-      - KAFKA_CFG_NODE_ID=${KAFKA_BROKER_ID}
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=${KAFKA_BROKER_ID}@kafka:9093
+      - KAFKA_CFG_NODE_ID=${KAFKA_BROKER_ID:-1}
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=${KAFKA_BROKER_ID:-1}@kafka:9093
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
       - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=1
-    ports:
-      - "9092:9092"
-    networks: [demo]
-
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui
-    depends_on: [kafka, connect]
-    environment:
-      - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
-      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME=connect
-      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS=http://connect:8083
-    ports:
-      - "8080:8080"
+    ports: ["9092:9092"]
     networks: [demo]
 
   connect:
-    image: confluentinc/cp-kafka-connect:7.6.1
+    build: ./connect            # Dockerfile installs JDBC sink + MariaDB driver
     container_name: connect
     depends_on: [kafka]
     environment:
@@ -50,25 +36,52 @@ services:
       - CONNECT_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
       - CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE=false
       - CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE=false
-      - CONNECT_PLUGIN_PATH=/usr/share/java,/connectors
-      # JDBC connector needs to be present under /connectors
-    volumes:
-      - ./connectors:/connectors
-      - ./certs:/certs:ro
-    ports:
-      - "8083:8083"
+      - CONNECT_PLUGIN_PATH=/usr/share/java,/usr/share/confluent-hub-components
+      # Pass SkySQL creds to Connect so connector JSON can env-expand:
+      - MARIADB_HOST=${MARIADB_HOST}
+      - MARIADB_PORT=${MARIADB_PORT}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+      - DEMO_TOPIC=${DEMO_TOPIC}
+    ports: ["8083:8083"]
     networks: [demo]
 
-  app:
-    build: ./app
-    container_name: demo-api
-    depends_on: [kafka]
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on: [kafka, connect]
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME=connect
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS=http://connect:8083
+    ports: ["8080:8080"]
+    networks: [demo]
+
+  api:
+    build: ./api                 # <-- Option B: your FastAPI lives in ./api now
+    container_name: metrics-api
+    environment:
+      - UVICORN_HOST=0.0.0.0
+      - UVICORN_PORT=8000
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    networks: [demo]
+    depends_on: [kafka]          # only if your API will talk to Kafka; safe either way
+
+  loader:
+    build: ./loader              # small image that has python deps
+    container_name: batch-loader
     environment:
       - KAFKA_BOOTSTRAP=kafka:9092
       - DEMO_TOPIC=${DEMO_TOPIC}
-    ports:
-      - "8000:8000"
+      - BATCH_PAYLOAD_FILE=${BATCH_PAYLOAD_FILE:-/app/payloads/batch.json}
+    command: python -m loader.batch_loader
     networks: [demo]
+    depends_on: [kafka]
+    deploy:
+      replicas: 0                # set to 1 when you want it to run once (or trigger manually)
 
 networks:
   demo: {}

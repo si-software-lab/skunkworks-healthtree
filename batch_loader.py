@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 """
 Public Health Data Interoperability Demo —
-with optional Neo4j bolt-on analytics and MariaDB to/from pathways.
+colima
+docker
+python
+opensearch
+kafka streaming event service
+mariaDB cloud to/from pathways
+neo4j bolt-on analytics
+wolfram counterfactual console
+demo ai agent (task/event handler)
+demo ai llm
 
 Features:
 - ASCII text console banner (always prints)

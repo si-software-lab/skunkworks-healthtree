@@ -1,4 +1,21 @@
-# Skunkworks: HealthTree Demo: Provider Directory + Kafka (Helm)
+# Skunkworks Demo: Provider Directory + Kafka (Helm)
+
+
+
+
+
+
+
+
+	•	You’re using app.include_router, which is good — you’re modularising the routing.
+	•	The business logic (reading/writing JSON file) is present and works.
+	w•	For a small API with only a few endpoints, this layout is perfectly fine.
+
+
+
+
+
+
 
 This repo contains:
 - A **synthetic MCO-style provider directory** generator (`provider_directory/generate_provider_directory.py`)
@@ -15,11 +32,9 @@ python generate_provider_directory.py --out ./out --seed 42
 ls -1 ./out
 ```
 
-perfect — here’s a tidy “project drop” with everything we’ve produced so far, as complete, runnable artifacts plus a text tree so you can drop this straight into your repo.
-
 Project Structure
 ```text
-healthtree-demo/
+demo/
 ├─ README.md
 ├─ .gitignore
 ├─ provider_directory/
@@ -48,7 +63,7 @@ healthtree-demo/
 
 README.md
 
-# HealthTree Demo: Provider Directory + Kafka (Helm)
+# Demo: Provider Directory + Kafka (Helm)
 
 This repo contains:
 - A **synthetic MCO-style provider directory** generator (`provider_directory/generate_provider_directory.py`)

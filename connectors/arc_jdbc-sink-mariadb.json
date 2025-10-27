@@ -3,11 +3,12 @@
   "config": {
     "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
     "tasks.max": "1",
-    "topics": "${file:/proc/1/environ:DEMO_TOPIC}",
+    "topics": "data.load.mariadb.batch.v1",
 
-    "connection.url": "jdbc:mariadb://${file:/proc/1/environ:MARIADB_HOST}:${file:/proc/1/environ:MARIADB_PORT}/${file:/proc/1/environ:MARIADB_DATABASE}?useSSL=true&requireSSL=true&verifyServerCertificate=true",
-    "connection.user": "${file:/proc/1/environ:MARIADB_USER}",
-    "connection.password": "${file:/proc/1/environ:MARIADB_PASSWORD}",
+    "connection.url": "jdbc:mariadb://serverless-eu-central-1.sysp0000.db1.skysql.com:4026/demo_db?useSSL=true&requireSSL=true&verifyServerCertificate=true",
+    "connection.user": "dbpwf04095684",
+    "connection.password": "y9p06wfU4a{QCB}LzExt6cd",
+    "sslmode": "verify-full",
 
     "auto.create": "true",
     "auto.evolve": "true",
